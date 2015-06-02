@@ -10,5 +10,15 @@ Create a single form with a radio or checkbox field that contains options from m
 
 Version
 -------
-0.0
-Dummy files.
+0.01
+Basic model schema.
+
+
+Requirements
+------------
+jsonfield
+
+
+To-Do
+-----
+Research proper implementation of requirements.
