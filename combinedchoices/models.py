@@ -4,7 +4,7 @@ from jsonfield import JSONField
 
 
 class BaseChoice(models.Model):
-    DESCRIPTION = 0
+    DESCRIPTION = 0  # text not displayed on final ouput
     SINGLE = 1
     MULTIPLE = 2
     NUMBER = 3
@@ -16,9 +16,7 @@ class BaseChoice(models.Model):
         (NUMBER, 'Number'),
         (TEXT, 'Text'),
     )
-    cross_combine = models.BooleanField()
-    # Chose not to primary key the name so class is eaiser to extend and
-    # constrain to a unique user-name pair
+    cross_combine = models.BooleanField(default=False)
     field_name = models.CharField(max_length=64, null=False, blank=False)
     field_type = models.IntegerField(
         choices=CHOICE_TYPES, null=False, blank=False)
@@ -31,8 +29,7 @@ class BaseChoice(models.Model):
         duplicates = BaseChoice.objects.exclude(id=self.id).filter(
             field_name=self.field_name)
         if duplicates.exists():
-            ValidationError(('Non-Unique Name Error'),
-                            code='invalid')
+            ValidationError(('Non-Unique Name Error'), code='invalid')
 
     def __unicode__(self):
         return self.field_name
@@ -56,6 +53,9 @@ class BaseCCObj(models.Model):
 class ChoiceField(models.Model):
     base_ccobj = models.ForeignKey(BaseCCObj, null=False, blank=False)
     base_choice = models.ForeignKey(BaseChoice, null=False, blank=False)
+
+    def __unicode__(self):
+        return '%s - %s' % (self.base_ccobj, self.base_choice)
 
 
 class Choice(models.Model):

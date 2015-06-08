@@ -4,25 +4,35 @@ from django.test import TestCase
 from model_mommy import mommy
 
 from combinedchoices.models import (
-    BaseChoice, ReadyCombinedObj, BaseCCObj, CompletedCombinedObj)
+    BaseChoice, BaseCCObj, ChoiceField, CompletedCombinedObj, ReadyCombinedObj)
 
 
 class Unicode_Tests(TestCase):
 
-    def test_BaseChoice(self):
-        mod = BaseChoice(field_name='testuni')
+    def call_BaseChoice(self):
+        mod = mommy.make(BaseChoice, field_name='testbc')
+        self.assertEqual('testbc', '%s' % mod)
+        mod.save()
+        return mod
+
+    def call_BaseCCObj(self):
+        mod = BaseCCObj(form_name='testbcco')
+        self.assertEqual('testbcco', '%s' % mod)
+        mod.save()
+        return mod
+
+    def test_ChoiceField(self):
+        mod = ChoiceField(
+            base_ccobj=self.call_BaseCCObj(),
+            base_choice=self.call_BaseChoice())
+        self.assertEqual('testbcco - testbc', '%s' % mod)
+
+    def test_CompletedCombinedObj(self):
+        mod = CompletedCombinedObj(form_name='testuni')
         self.assertEqual('testuni', '%s' % mod)
 
     def test_ReadyCombinedObj(self):
         mod = ReadyCombinedObj(form_name='testuni')
-        self.assertEqual('testuni', '%s' % mod)
-
-    def test_BaseCCObj(self):
-        mod = BaseCCObj(form_name='testuni')
-        self.assertEqual('testuni', '%s' % mod)
-
-    def test_CompletedCombinedObj(self):
-        mod = CompletedCombinedObj(form_name='testuni')
         self.assertEqual('testuni', '%s' % mod)
 
 
