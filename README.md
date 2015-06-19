@@ -10,7 +10,7 @@ Create a single form with a radio or checkbox field that contains options from m
 
 Version
 -------
-0.01
+0.02
 Basic model schema.
 
 
@@ -22,3 +22,4 @@ jsonfield
 To-Do
 -----
 Research proper implementation of requirements.
+Use simplified MD format

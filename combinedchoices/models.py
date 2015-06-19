@@ -29,10 +29,14 @@ class BaseChoice(models.Model):
         duplicates = BaseChoice.objects.exclude(id=self.id).filter(
             field_name=self.field_name)
         if duplicates.exists():
-            ValidationError(('Non-Unique Name Error'), code='invalid')
+            raise ValidationError(('Non-Unique Name Error'), code='invalid')
 
     def __unicode__(self):
         return self.field_name
+
+    @property
+    def choice_type(self):
+        return self.CHOICE_TYPES[self.field_type][1]
 
 #    def values(self, queryset):
 #        assert(queryset.objects.class == BaseCCObj)
@@ -44,10 +48,13 @@ class BaseChoice(models.Model):
 class BaseCCObj(models.Model):
     form_name = models.CharField(max_length=64, null=False, blank=False)
     choice_fields = models.ManyToManyField(
-        BaseChoice, through='ChoiceField', null=False, blank=False)
+        BaseChoice, through='ChoiceField', blank=True)
 
     def __unicode__(self):
         return self.form_name
+
+    def base_choices(self):
+        return self.choice_fields.all()
 
 
 class ChoiceField(models.Model):

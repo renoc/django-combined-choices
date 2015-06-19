@@ -38,6 +38,19 @@ class Unicode_Tests(TestCase):
 
 class BaseChoice_Tests(TestCase):
 
+    def test_choice_text(self):
+        mod = mommy.make(BaseChoice, field_type=1)
+        self.assertEqual(mod.choice_type, 'Single')
+
+    def test_linked_choices(self):
+        tested = mommy.make(BaseCCObj, form_name='tested')
+        untested = mommy.make(BaseCCObj, form_name='untested')
+        modin = mommy.make(BaseChoice, field_name='in')
+        modout = mommy.make(BaseChoice, field_name='out')
+        mommy.make(ChoiceField, base_ccobj=tested, base_choice=modin)
+        mommy.make(ChoiceField, base_ccobj=untested, base_choice=modout)
+        self.assertEqual(tested.base_choices().get(), modin)
+
     def test_validate_pass(self):
         mod = mommy.make(BaseChoice, field_name='testuni')
         mod.save()
@@ -48,4 +61,4 @@ class BaseChoice_Tests(TestCase):
         mod = mommy.make(BaseChoice, field_name='testuni')
         mod.save()
         mod = mommy.make(BaseChoice, field_name='testuni')
-        self.assertRaises(ValidationError, mod.validate_unique())
+        self.assertRaises(ValidationError, mod.validate_unique)
