@@ -4,7 +4,8 @@ from django.test import TestCase
 from model_mommy import mommy
 
 from combinedchoices.models import (
-    BaseChoice, BaseCCObj, ChoiceField, CompletedCombinedObj, ReadyCombinedObj)
+    BaseChoice, BaseCCObj, Choice, ChoiceSection, CompletedCombinedObj,
+    ReadyCombinedObj)
 
 
 class Unicode_Tests(TestCase):
@@ -21,11 +22,15 @@ class Unicode_Tests(TestCase):
         mod.save()
         return mod
 
-    def test_ChoiceField(self):
-        mod = ChoiceField(
+    def test_ChoiceSection(self):
+        mod = ChoiceSection(
             base_ccobj=self.call_BaseCCObj(),
             base_choice=self.call_BaseChoice())
         self.assertEqual('testbcco - testbc', '%s' % mod)
+
+    def test_Choice(self):
+        mod = mommy.make(Choice, text='01234567890123456789twenty')
+        self.assertEqual('%s' % mod, '01234567890123456789')
 
     def test_CompletedCombinedObj(self):
         mod = CompletedCombinedObj(form_name='testuni')
@@ -47,8 +52,8 @@ class BaseChoice_Tests(TestCase):
         untested = mommy.make(BaseCCObj, form_name='untested')
         modin = mommy.make(BaseChoice, field_name='in')
         modout = mommy.make(BaseChoice, field_name='out')
-        mommy.make(ChoiceField, base_ccobj=tested, base_choice=modin)
-        mommy.make(ChoiceField, base_ccobj=untested, base_choice=modout)
+        mommy.make(ChoiceSection, base_ccobj=tested, base_choice=modin)
+        mommy.make(ChoiceSection, base_ccobj=untested, base_choice=modout)
         self.assertEqual(tested.base_choices().get(), modin)
 
     def test_validate_pass(self):

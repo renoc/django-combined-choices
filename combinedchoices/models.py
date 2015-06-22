@@ -47,17 +47,17 @@ class BaseChoice(models.Model):
 
 class BaseCCObj(models.Model):
     form_name = models.CharField(max_length=64, null=False, blank=False)
-    choice_fields = models.ManyToManyField(
-        BaseChoice, through='ChoiceField', blank=True)
+    choice_sections = models.ManyToManyField(
+        BaseChoice, through='ChoiceSection', blank=True)
 
     def __unicode__(self):
         return self.form_name
 
     def base_choices(self):
-        return self.choice_fields.all()
+        return self.choice_sections.all()
 
 
-class ChoiceField(models.Model):
+class ChoiceSection(models.Model):
     base_ccobj = models.ForeignKey(BaseCCObj, null=False, blank=False)
     base_choice = models.ForeignKey(BaseChoice, null=False, blank=False)
 
@@ -66,8 +66,11 @@ class ChoiceField(models.Model):
 
 
 class Choice(models.Model):
-    choice_field = models.ForeignKey(ChoiceField, null=False, blank=False)
+    choice_section = models.ForeignKey(ChoiceSection, null=False, blank=False)
     text = models.TextField(null=False, blank=False)
+
+    def __unicode__(self):
+        return self.text[:20]
 
 
 class CompletedCombinedObj(models.Model):
@@ -80,9 +83,7 @@ class CompletedCombinedObj(models.Model):
 
 class ReadyCombinedObj(models.Model):
     form_name = models.CharField(max_length=64, null=False, blank=False)
-    included_forms = models.ManyToManyField(
-        BaseCCObj, null=False, blank=False)
-
+    included_forms = models.ManyToManyField(BaseCCObj, null=False, blank=False)
 
     def __unicode__(self):
         return self.form_name
