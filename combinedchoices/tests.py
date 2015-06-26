@@ -3,29 +3,25 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_mommy import mommy
 
-from combinedchoices.models import (
+from combinedchoices.fake_models import (
     BaseChoice, BaseCCObj, Choice, ChoiceSection, CompletedCombinedObj,
     ReadyCombinedObj)
 
 
 class Unicode_Tests(TestCase):
 
-    def call_BaseChoice(self):
+    def test_BaseChoice(self):
         mod = mommy.make(BaseChoice, field_name='testbc')
         self.assertEqual('testbc', '%s' % mod)
-        mod.save()
-        return mod
 
-    def call_BaseCCObj(self):
+    def test_BaseCCObj(self):
         mod = BaseCCObj(form_name='testbcco')
         self.assertEqual('testbcco', '%s' % mod)
-        mod.save()
-        return mod
 
     def test_ChoiceSection(self):
-        mod = ChoiceSection(
-            base_ccobj=self.call_BaseCCObj(),
-            base_choice=self.call_BaseChoice())
+        mod = mommy.make(
+            ChoiceSection, base_ccobj__form_name='testbcco',
+            base_choice__field_name='testbc')
         self.assertEqual('testbcco - testbc', '%s' % mod)
 
     def test_Choice(self):
@@ -44,26 +40,32 @@ class Unicode_Tests(TestCase):
 class BaseChoice_Tests(TestCase):
 
     def test_choice_text(self):
-        mod = mommy.make(BaseChoice, field_type=1)
+        mod = BaseChoice(field_type=1)
         self.assertEqual(mod.choice_type, 'Single')
 
     def test_linked_choices(self):
-        tested = mommy.make(BaseCCObj, form_name='tested')
-        untested = mommy.make(BaseCCObj, form_name='untested')
-        modin = mommy.make(BaseChoice, field_name='in')
-        modout = mommy.make(BaseChoice, field_name='out')
-        mommy.make(ChoiceSection, base_ccobj=tested, base_choice=modin)
-        mommy.make(ChoiceSection, base_ccobj=untested, base_choice=modout)
+        hack = mommy.make(ChoiceSection, base_ccobj__form_name='hack')
+        model = hack.base_ccobj.choice_sections.through
+        mod = mommy.make(
+            model, base_ccobj__form_name='tested',
+            base_choice__field_name='modin')
+        tested = mod.base_ccobj
+        modin = mod.base_choice
+        mod = mommy.make(
+            model, base_ccobj__form_name='untested',
+            base_choice__field_name='modout')
+        self.assertNotEqual(tested, mod.base_ccobj)
+        self.assertNotEqual(modin, mod.base_choice)
         self.assertEqual(tested.base_choices().get(), modin)
 
     def test_validate_pass(self):
-        mod = mommy.make(BaseChoice, field_name='testuni')
+        mod = BaseChoice(field_name='testuni', field_type=0)
         mod.save()
         mod.validate_unique()
         #No errors raised
 
     def test_validate_fail(self):
-        mod = mommy.make(BaseChoice, field_name='testuni')
+        mod = BaseChoice(field_name='testuni', field_type=0)
         mod.save()
-        mod = mommy.make(BaseChoice, field_name='testuni')
+        mod = BaseChoice(field_name='testuni', field_type=0)
         self.assertRaises(ValidationError, mod.validate_unique)
