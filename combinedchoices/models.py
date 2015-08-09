@@ -5,11 +5,11 @@ from jsonfield import JSONField
 
 
 class BaseChoice(models.Model):
-    DESCRIPTION = 0  # text not displayed on final ouput
-    SINGLE = 1
-    MULTIPLE = 2
-    NUMBER = 3
-    TEXT = 4
+    DESCRIPTION = 0  # outputed with no input
+    SINGLE = 1  # radio button
+    MULTIPLE = 2  # checkboxes
+    NUMBER = 3  # number input
+    TEXT = 4  # text input
     CHOICE_TYPES = (
         (DESCRIPTION, 'Description'),
         (SINGLE, 'Single'),
@@ -17,7 +17,7 @@ class BaseChoice(models.Model):
         (NUMBER, 'Number'),
         (TEXT, 'Text'),
     )
-    cross_combine = models.BooleanField(default=False)
+    cross_combine = models.BooleanField(default=True)
     field_name = models.CharField(max_length=64, null=False, blank=False)
     field_type = models.IntegerField(
         choices=CHOICE_TYPES, null=False, blank=False)
