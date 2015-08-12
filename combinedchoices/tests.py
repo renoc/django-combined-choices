@@ -4,16 +4,15 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_mommy import mommy
 
-from combinedchoices.models import BASE_MODEL, SECTION_MODEL, THROUGH_MODEL
+from combinedchoices.models import BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, CompletedCCO
 from combinedchoices.fake_models import ReadyCombinedObj
-from combinedchoices.forms import ReadyForm, CHOICE_MODEL, COMPLETED_MODEL
+from combinedchoices.forms import ReadyForm, CHOICE_MODEL
 
 
 BaseCCObj = apps.get_model(*BASE_MODEL.split('.'))
 BaseChoice = apps.get_model(*SECTION_MODEL.split('.'))
 Choice = apps.get_model(*CHOICE_MODEL.split('.'))
 ChoiceSection = apps.get_model(*THROUGH_MODEL.split('.'))
-CompletedCombinedObj = apps.get_model(*COMPLETED_MODEL.split('.'))
 
 
 class Unicode_Tests(TestCase):
@@ -36,9 +35,14 @@ class Unicode_Tests(TestCase):
         mod = mommy.make(Choice, text='01234567890123456789twenty')
         self.assertEqual('%s' % mod, '01234567890123456789')
 
-    def test_CompletedCombinedObj(self):
-        mod = CompletedCombinedObj(form_name='testuni')
+    def test_CompletedCCO_Null(self):
+        mod = CompletedCCO(form_name='testuni')
         self.assertEqual('testuni', '%s' % mod)
+
+    def test_CompletedCCO_User(self):
+        mod = mommy.make(
+            CompletedCCO, form_name='testuni', user__username='testuser')
+        self.assertEqual('testuser - testuni', '%s' % mod)
 
     def test_ReadyCombinedObj(self):
         mod = ReadyCombinedObj(form_name='testuni')
@@ -146,13 +150,13 @@ class Section_Type_by_Form_Tests(TestCase):
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': u'preset'}
 
-        self.assertFalse(CompletedCombinedObj.objects.all().exists())
+        self.assertFalse(CompletedCCO.objects.all().exists())
 
         form.save()
 
-        self.assertTrue(CompletedCombinedObj.objects.all().exists())
+        self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCombinedObj.objects.get().form_data['section'][0], 'preset')
+            CompletedCCO.objects.get().form_data['section'][0], 'preset')
 
     def test_single_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
@@ -166,13 +170,13 @@ class Section_Type_by_Form_Tests(TestCase):
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': choice}
 
-        self.assertFalse(CompletedCombinedObj.objects.all().exists())
+        self.assertFalse(CompletedCCO.objects.all().exists())
 
         form.save()
 
-        self.assertTrue(CompletedCombinedObj.objects.all().exists())
+        self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCombinedObj.objects.get().form_data['section'][0], 'preset')
+            CompletedCCO.objects.get().form_data['section'][0], 'preset')
 
     def test_description_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
@@ -186,13 +190,13 @@ class Section_Type_by_Form_Tests(TestCase):
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': ''}
 
-        self.assertFalse(CompletedCombinedObj.objects.all().exists())
+        self.assertFalse(CompletedCCO.objects.all().exists())
 
         form.save()
 
-        self.assertTrue(CompletedCombinedObj.objects.all().exists())
+        self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertFalse(
-            'section' in CompletedCombinedObj.objects.get().form_data.keys())
+            'section' in CompletedCCO.objects.get().form_data.keys())
 
     def test_multiple_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
@@ -206,11 +210,11 @@ class Section_Type_by_Form_Tests(TestCase):
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': [choice]}
 
-        self.assertFalse(CompletedCombinedObj.objects.all().exists())
+        self.assertFalse(CompletedCCO.objects.all().exists())
 
         form.save()
 
-        self.assertTrue(CompletedCombinedObj.objects.all().exists())
+        self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCombinedObj.objects.get().form_data['section'][0],
+            CompletedCCO.objects.get().form_data['section'][0],
             choice.text)

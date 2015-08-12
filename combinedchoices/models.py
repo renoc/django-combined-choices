@@ -1,7 +1,36 @@
+from django.apps import apps
 from django.conf import settings
+from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.shortcuts import get_object_or_404
 from jsonfield import JSONField
+
+
+class UserModelManager(models.QuerySet):
+
+    def get_user_objects(self, user):
+        return self.filter(user=user)
+
+    def get_or_404(self, *args, **kwargs):
+        return get_object_or_404(self.model, *args, **kwargs)
+
+
+class UserModelMixin(models.Model):
+    user = models.ForeignKey(User, null=True, blank=True)
+    objects = UserModelManager.as_manager()
+
+    class Meta:
+        abstract = True
+
+    def unicode_prefex(self):
+        if self.user:
+            return '%s - ' % self.user
+        else:
+            return ''
+
+
+ModelMixin = UserModelMixin
 
 
 class BaseChoice(models.Model):
@@ -107,12 +136,9 @@ class ReadyCombinedObj(models.Model):
         return self.form_name
 
 
-class CompletedCombinedObj(models.Model):
+class CompletedCCO(ModelMixin):
     form_name = models.CharField(max_length=64, null=False, blank=False)
     form_data = JSONField(default={})
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
-        return self.form_name
+        return '%s%s' % (self.unicode_prefex(), self.form_name)

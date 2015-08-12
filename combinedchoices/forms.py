@@ -5,7 +5,7 @@ from django.forms.forms import Form
 from django.forms.models import ModelChoiceField, ModelMultipleChoiceField
 from django.forms.widgets import CheckboxSelectMultiple, RadioSelect, Textarea
 
-from combinedchoices.models import THROUGH_MODEL, SECTION_MODEL
+from combinedchoices.models import THROUGH_MODEL, SECTION_MODEL, CompletedCCO
 
 
 class ChoiceLabelMixin(object):
@@ -24,9 +24,6 @@ class SingleChoice (ChoiceLabelMixin, ModelChoiceField):
 
 CHOICE_MODEL = getattr(
     settings, 'CHOICE_MODEL', 'combinedchoices.fake_models.Choice')
-COMPLETED_MODEL = getattr(
-    settings, 'COMPLETED_MODEL',
-    'combinedchoices.fake_models.CompletedCombinedObj')
 
 
 class ReadyForm(Form):
@@ -88,7 +85,6 @@ class ReadyForm(Form):
 
     def save(self, *args, **kwargs):
         completed = {}
-        commodel = apps.get_model(*COMPLETED_MODEL.split('.'))
         name = self.cleaned_data.pop('form_name')
         self.fields.pop('form_name')
         for field in self.fields.keys():
@@ -105,5 +101,5 @@ class ReadyForm(Form):
                     completed[field].append(choice.text)
             else:
                 raise NotImplementedError()
-        return commodel.objects.create(
+        return CompletedCCO.objects.create(
             form_name=name, form_data=completed, **kwargs)
