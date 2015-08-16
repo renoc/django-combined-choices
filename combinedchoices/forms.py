@@ -27,10 +27,10 @@ class ReadyForm(Form):
     form_name = CharField(label='Completed Name')
 
     def __init__(self, *args, **kwargs):
-        ready_class = kwargs.pop('ready_class')
+        ready_obj = kwargs.pop('ready_obj')
         filters = kwargs.pop('filters', {})
         super(ReadyForm, self).__init__(*args, **kwargs)
-        baseccobjs = ready_class.included_forms.filter(**filters)
+        baseccobjs = ready_obj.included_forms.filter(**filters)
         for section in self.get_sections(baseccobjs, **filters):
             if section.cross_combine:
                 name = section.field_name

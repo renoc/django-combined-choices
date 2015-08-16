@@ -122,14 +122,15 @@ class Choice(models.Model):
         return self.text[:20]
 
 
-class ReadyCombinedObj(models.Model):
+class ReadyCCO(ModelMixin):
     form_name = models.CharField(max_length=64, null=False, blank=False)
     included_forms = models.ManyToManyField(BASE_MODEL, null=False, blank=False)
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
+        return '%s%s' % (self.unicode_prefex(), self.form_name)
+
+    @property
+    def name(self):
         return self.form_name
 
 

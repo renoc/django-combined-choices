@@ -4,8 +4,8 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_mommy import mommy
 
-from combinedchoices.models import BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, Choice, CompletedCCO
-from combinedchoices.fake_models import ReadyCombinedObj
+from combinedchoices.models import (
+    BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, Choice, CompletedCCO, ReadyCCO)
 from combinedchoices.forms import ReadyForm
 
 
@@ -43,9 +43,14 @@ class Unicode_Tests(TestCase):
             CompletedCCO, form_name='testuni', user__username='testuser')
         self.assertEqual('testuser - testuni', '%s' % mod)
 
-    def test_ReadyCombinedObj(self):
-        mod = ReadyCombinedObj(form_name='testuni')
+    def test_ReadyCCO_Null(self):
+        mod = ReadyCCO(form_name='testuni')
         self.assertEqual('testuni', '%s' % mod)
+
+    def test_ReadyCCO_User(self):
+        mod = mommy.make(
+            ReadyCCO, form_name='testuni', user__username='testuser')
+        self.assertEqual('testuser - testuni', '%s' % mod)
 
 
 class BaseChoice_Tests(TestCase):
@@ -101,8 +106,8 @@ class Section_Type_by_Form_Tests(TestCase):
         comp2 = mommy.make(BaseCCObj, form_name='compendium_test')
         cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        form = ReadyForm(ready_class=combined)
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        form = ReadyForm(ready_obj=combined)
         choices = form.fields['section'].widget.choices
         self.assertEqual(choices[0][1], 'test_choice')
 
@@ -116,15 +121,15 @@ class Section_Type_by_Form_Tests(TestCase):
         comp2 = mommy.make(BaseCCObj, form_name='compendium_test')
         cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        form = ReadyForm(ready_class=combined)
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        form = ReadyForm(ready_obj=combined)
         choices = form.fields['test_compendium - section'].widget.choices
         self.assertEqual(choices[0][1], 'test_choice')
 
     def test_text_init(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        kwargs = {'ready_class': combined}
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
         form = ReadyForm(**kwargs)
 
         sect = mommy.make(
@@ -139,8 +144,8 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_text_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        kwargs = {'ready_class': combined}
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
             BaseChoice, field_name='section', field_type=BaseChoice.TEXT)
@@ -159,8 +164,8 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_single_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        kwargs = {'ready_class': combined}
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
             BaseChoice, field_name='section', field_type=BaseChoice.SINGLE)
@@ -179,8 +184,8 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_description_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        kwargs = {'ready_class': combined}
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
             BaseChoice, field_name='section', field_type=BaseChoice.DESCRIPTION)
@@ -199,8 +204,8 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_multiple_save(self):
         comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
-        combined = mommy.make(ReadyCombinedObj, included_forms=[comp1])
-        kwargs = {'ready_class': combined}
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
             BaseChoice, field_name='section', field_type=BaseChoice.MULTIPLE)

@@ -1,7 +1,6 @@
 from django.contrib import admin
 from combinedchoices.models import (
-    BaseChoice, BaseCCObj, ChoiceSection, Choice, CompletedCCO,
-    ReadyCombinedObj)
+    BaseChoice, BaseCCObj, ChoiceSection, Choice, CompletedCCO, ReadyCCO)
 
 
 class ChoiceSectionThroughInline(admin.TabularInline):
@@ -39,4 +38,4 @@ class ChoiceSectionAdmin(admin.ModelAdmin):
 #admin.site.register(BaseCCObj, BaseCCObjAdmin)
 #admin.site.register(ChoiceSection, ChoiceSectionAdmin)
 admin.site.register(CompletedCCO)
-#admin.site.register(ReadyCombinedObj)
+admin.site.register(ReadyCCO)
