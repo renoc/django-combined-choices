@@ -1,27 +1,33 @@
 from django.apps import apps
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.http import Http404
 from django.test import TestCase
 from model_mommy import mommy
 
 from combinedchoices.models import (
-    BASE_MODEL, SECTION_MODEL,
-    Choice, ChoiceSection, CompletedCCO, ReadyCCO)
+    BaseCCO, Choice, ChoiceSection, CompletedCCO, ReadyCCO, Section)
 from combinedchoices.forms import ReadyForm
-
-
-BaseCCObj = apps.get_model(*BASE_MODEL.split('.'))
-BaseChoice = apps.get_model(*SECTION_MODEL.split('.'))
 
 
 class Unicode_Tests(TestCase):
 
-    def test_BaseChoice(self):
-        mod = mommy.make(BaseChoice, field_name='testbc')
+    def test_Section_Null(self):
+        mod = mommy.make(Section, field_name='testbc')
         self.assertEqual('testbc', '%s' % mod)
 
-    def test_BaseCCObj(self):
-        mod = BaseCCObj(form_name='testbcco')
+    def test_Section_User(self):
+        mod = mommy.make(
+            Section, field_name='testuni', user__username='testuser')
+        self.assertEqual('testuser - testuni', '%s' % mod)
+
+    def test_BaseCCO_User(self):
+        mod = mommy.make(
+            BaseCCO, form_name='testuni', user__username='testuser')
+        self.assertEqual('testuser - testuni', '%s' % mod)
+
+    def test_BaseCCO_Null(self):
+        mod = BaseCCO(form_name='testbcco')
         self.assertEqual('testbcco', '%s' % mod)
 
     def test_ChoiceSection(self):
@@ -53,10 +59,47 @@ class Unicode_Tests(TestCase):
         self.assertEqual('testuser - testuni', '%s' % mod)
 
 
-class BaseChoice_Tests(TestCase):
+class BaseCCO_Tests(TestCase):
+
+    def test_get_or_404(self):
+        mod = BaseCCO.objects.create(form_name='testcc')
+        self.assertEqual(BaseCCO.objects.get_or_404(id=mod.id), mod)
+        self.assertRaises(Http404, BaseCCO.objects.get_or_404, id=99)
+
+    def test_get_user_classes(self):
+        user = User(username='testuser')
+        user.save()
+        mod = BaseCCO(form_name='testuni', user=user)
+        mod.save()
+        self.assertEqual(
+            mod, BaseCCO.objects.get_user_objects(user=user).get())
+
+    def test_name_property(self):
+        testname = 'testname'
+        mod = BaseCCO(form_name=testname)
+        self.assertEqual(mod.name, testname)
+
+    def test_name_property_combined(self):
+        testname = 'testname'
+        mod = ReadyCCO(form_name=testname)
+        self.assertEqual(mod.name, testname)
+
+    def test_unlinked_choices(self):
+        user = mommy.make(User, username='testuser')
+        tested = mommy.make(BaseCCO, form_name='tested', user=user)
+        untested = mommy.make(BaseCCO, form_name='untested', user=user)
+        modin = mommy.make(Section, field_name='in', user=user)
+        modout = mommy.make(Section, field_name='out', user=user)
+        modother = mommy.make(Section, field_name='other')
+        mommy.make(ChoiceSection, base_ccobj=tested, base_choice=modin)
+        mommy.make(ChoiceSection, base_ccobj=untested, base_choice=modout)
+        self.assertEqual(tested.available_sections().get(), modout)
+
+
+class Section_ModelTests(TestCase):
 
     def test_choice_text(self):
-        mod = BaseChoice(field_type=1)
+        mod = Section(field_type=1)
         self.assertEqual(mod.choice_type, 'Single')
 
     def test_linked_choices(self):
@@ -75,17 +118,16 @@ class BaseChoice_Tests(TestCase):
         self.assertEqual(tested.base_choices().get(), modin)
 
     def test_validate_pass(self):
-        mod = BaseChoice(field_name='testuni', field_type=0)
+        mod = mommy.make(Section, field_name='testuni')
         mod.save()
         mod.validate_unique()
         #No errors raised
 
-# Validate overwritten in front end repo
-#    def test_validate_fail(self):
-#        mod = BaseChoice(field_name='testuni', field_type=0)
-#        mod.save()
-#        mod = BaseChoice(field_name='testuni', field_type=0)
-#        self.assertRaises(ValidationError, mod.validate_unique)
+    def test_validate_fail(self):
+        mod = mommy.make(Section, field_name='testuni')
+        mod.save()
+        mod = mommy.make(Section, field_name='testuni')
+        self.assertRaises(ValidationError, mod.validate_unique)
 
 
 class ReadyForm_Tests(TestCase):
@@ -98,12 +140,12 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_character_form_init_cross(self):
         sect = mommy.make(
-            BaseChoice, field_name='section', cross_combine=True,
-            field_type=BaseChoice.MULTIPLE)
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+            Section, field_name='section', cross_combine=True,
+            field_type=Section.MULTIPLE)
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
-        comp2 = mommy.make(BaseCCObj, form_name='compendium_test')
+        comp2 = mommy.make(BaseCCO, form_name='compendium_test')
         cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
@@ -113,12 +155,12 @@ class Section_Type_by_Form_Tests(TestCase):
 
     def test_character_form_init_uncross(self):
         sect = mommy.make(
-            BaseChoice, field_name='section', cross_combine=False,
-            field_type=BaseChoice.MULTIPLE)
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+            Section, field_name='section', cross_combine=False,
+            field_type=Section.MULTIPLE)
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
-        comp2 = mommy.make(BaseCCObj, form_name='compendium_test')
+        comp2 = mommy.make(BaseCCO, form_name='compendium_test')
         cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
@@ -127,13 +169,13 @@ class Section_Type_by_Form_Tests(TestCase):
         self.assertEqual(choices[0][1], 'test_choice')
 
     def test_text_init(self):
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         kwargs = {'ready_obj': combined}
         form = ReadyForm(**kwargs)
 
         sect = mommy.make(
-            BaseChoice, field_name='section', field_type=BaseChoice.TEXT)
+            Section, field_name='section', field_type=Section.TEXT)
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
 
@@ -143,12 +185,12 @@ class Section_Type_by_Form_Tests(TestCase):
         self.assertEqual(form.fields['name'].initial, 'test_choice')
 
     def test_text_save(self):
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
-            BaseChoice, field_name='section', field_type=BaseChoice.TEXT)
+            Section, field_name='section', field_type=Section.TEXT)
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
         form = ReadyForm(**kwargs)
@@ -163,12 +205,12 @@ class Section_Type_by_Form_Tests(TestCase):
             CompletedCCO.objects.get().form_data['section'][0], 'preset')
 
     def test_single_save(self):
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
-            BaseChoice, field_name='section', field_type=BaseChoice.SINGLE)
+            Section, field_name='section', field_type=Section.SINGLE)
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         choice = mommy.make(Choice, text='preset', choice_section=cs)
         form = ReadyForm(**kwargs)
@@ -183,12 +225,12 @@ class Section_Type_by_Form_Tests(TestCase):
             CompletedCCO.objects.get().form_data['section'][0], 'preset')
 
     def test_description_save(self):
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
-            BaseChoice, field_name='section', field_type=BaseChoice.DESCRIPTION)
+            Section, field_name='section', field_type=Section.DESCRIPTION)
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         choice = mommy.make(Choice, text='preset', choice_section=cs)
         form = ReadyForm(**kwargs)
@@ -203,12 +245,12 @@ class Section_Type_by_Form_Tests(TestCase):
             'section' in CompletedCCO.objects.get().form_data.keys())
 
     def test_multiple_save(self):
-        comp1 = mommy.make(BaseCCObj, form_name='test_compendium')
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         kwargs = {'ready_obj': combined}
 
         sect = mommy.make(
-            BaseChoice, field_name='section', field_type=BaseChoice.MULTIPLE)
+            Section, field_name='section', field_type=Section.MULTIPLE)
         cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
         choice = mommy.make(Choice, text='test_choice', choice_section=cs)
         form = ReadyForm(**kwargs)

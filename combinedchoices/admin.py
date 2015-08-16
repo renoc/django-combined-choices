@@ -1,17 +1,17 @@
 from django.contrib import admin
 from combinedchoices.models import (
-    BaseChoice, BaseCCObj, ChoiceSection, Choice, CompletedCCO, ReadyCCO)
+    BaseCCO, ChoiceSection, Choice, CompletedCCO, ReadyCCO, Section)
 
 
 class ChoiceSectionThroughInline(admin.TabularInline):
-    model = BaseCCObj.choice_sections.through
+    model = BaseCCO.choice_sections.through
 
     class Meta:
         abstract = True
 
 
 class BaseCCObjAdmin(admin.ModelAdmin):
-    model = BaseCCObj
+    model = BaseCCO
     inlines = (ChoiceSectionThroughInline,)
 
     class Meta:
@@ -28,8 +28,8 @@ class ChoiceSectionAdmin(admin.ModelAdmin):
     list_display =['base_ccobj', 'base_choice']
 
 
-#admin.site.register(BaseChoice)
-#admin.site.register(BaseCCObj, BaseCCObjAdmin)
+admin.site.register(BaseCCO, BaseCCObjAdmin)
 admin.site.register(ChoiceSection, ChoiceSectionAdmin)
 admin.site.register(CompletedCCO)
 admin.site.register(ReadyCCO)
+admin.site.register(Section)

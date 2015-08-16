@@ -1,12 +1,10 @@
 from django.apps import apps
-from django.conf import settings
 from django.forms.fields import BooleanField, CharField
 from django.forms.forms import Form
 from django.forms.models import ModelChoiceField, ModelMultipleChoiceField
 from django.forms.widgets import CheckboxSelectMultiple, RadioSelect, Textarea
 
-from combinedchoices.models import (
-    SECTION_MODEL, Choice, ChoiceSection, CompletedCCO)
+from combinedchoices.models import Choice, ChoiceSection, CompletedCCO, Section
 
 
 class ChoiceLabelMixin(object):
@@ -46,7 +44,6 @@ class ReadyForm(Form):
                     self.create_section_field(name, section, queryset)
 
     def create_section_field(self, name, basechoice, queryset):
-        Section = apps.get_model(*SECTION_MODEL.split('.'))
         queryset = queryset.filter(
             choice_section__base_choice=basechoice).order_by('text')
         if basechoice.field_type in [Section.TEXT, Section.DESCRIPTION]:
@@ -75,8 +72,7 @@ class ReadyForm(Form):
 
     def get_sections(self, compendiums, **kwargs):
         kwargs.update({'choicesection__base_ccobj__in':compendiums})
-        model = apps.get_model(*SECTION_MODEL.split('.'))
-        return model.objects.filter(**kwargs)
+        return Section.objects.filter(**kwargs)
 
     def save(self, *args, **kwargs):
         completed = {}

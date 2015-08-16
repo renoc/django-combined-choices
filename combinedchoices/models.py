@@ -17,11 +17,18 @@ class UserModelManager(models.QuerySet):
 
 
 class UserModelMixin(models.Model):
+    SELF_FILTER = ['user']
     user = models.ForeignKey(User, null=True, blank=True)
     objects = UserModelManager.as_manager()
 
     class Meta:
         abstract = True
+
+    def self_kwargs(self):
+        kwargs = {}
+        for selfilter in self.SELF_FILTER:
+            kwargs.update({selfilter: getattr(self, selfilter, None)})
+        return kwargs
 
     def unicode_prefex(self):
         if self.user:
@@ -33,7 +40,7 @@ class UserModelMixin(models.Model):
 ModelMixin = UserModelMixin
 
 
-class BaseChoice(models.Model):
+class Section(ModelMixin):
     DESCRIPTION = 0  # outputed with no input
     SINGLE = 1  # radio button
     MULTIPLE = 2  # checkboxes
@@ -54,56 +61,44 @@ class BaseChoice(models.Model):
     min_selects = models.IntegerField(null=False, default=1)
     max_selects = models.IntegerField(null=False, default=1)
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
-        return self.field_name
+        return '%s%s' % (self.unicode_prefex(), self.field_name)
 
     @property
     def choice_type(self):
         return self.CHOICE_TYPES[self.field_type][1]
 
     def validate_unique(self, exclude=None):
-        super(BaseChoice, self).validate_unique(exclude=exclude)
+        super(Section, self).validate_unique(exclude=exclude)
         duplicates = type(self).objects.exclude(id=self.id).filter(
-            field_name=self.field_name)
+            field_name=self.field_name, **self.self_kwargs())
         if duplicates.exists():
             raise ValidationError(('Non-Unique Name Error'), code='invalid')
 
-#    def values(self, queryset):
-#        assert(queryset.objects.class == BaseCCObj)
-#        return Choice.objects.filter(
-#            choice_field.base_choice=self,
-#            choice_field.base_ccobj__in=queryset)
 
-
-SECTION_MODEL = getattr(
-    settings, 'SECTION_MODEL', 'combinedchoices.fake_models.BaseChoice')
-
-
-class BaseCCObj(models.Model):
+class BaseCCO(ModelMixin):
     form_name = models.CharField(max_length=64, null=False, blank=False)
     choice_sections = models.ManyToManyField(
-        SECTION_MODEL, through='ChoiceSection', blank=True)
-
-    class Meta:
-        abstract = True
+        Section, through='ChoiceSection', blank=True)
 
     def __unicode__(self):
+        return '%s%s' % (self.unicode_prefex(), self.form_name)
+
+    @property
+    def name(self):
         return self.form_name
+
+    def available_sections(self):
+        return Section.objects.filter(**self.self_kwargs()).exclude(
+            basecco=self)
 
     def base_choices(self):
         return self.choice_sections.all()
 
 
-BASE_MODEL = getattr(
-    settings, 'BASE_MODEL', 'combinedchoices.fake_models.BaseCCObj')
-
-
 class ChoiceSection(models.Model):
-    base_ccobj = models.ForeignKey(BASE_MODEL, null=False, blank=False)
-    base_choice = models.ForeignKey(SECTION_MODEL, null=False, blank=False)
+    base_ccobj = models.ForeignKey(BaseCCO, null=False, blank=False)
+    base_choice = models.ForeignKey(Section, null=False, blank=False)
 
     def __unicode__(self):
         return '%s - %s' % (self.base_ccobj, self.base_choice)
@@ -119,7 +114,7 @@ class Choice(models.Model):
 
 class ReadyCCO(ModelMixin):
     form_name = models.CharField(max_length=64, null=False, blank=False)
-    included_forms = models.ManyToManyField(BASE_MODEL, null=False, blank=False)
+    included_forms = models.ManyToManyField(BaseCCO, null=False, blank=False)
 
     def __unicode__(self):
         return '%s%s' % (self.unicode_prefex(), self.form_name)
