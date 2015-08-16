@@ -5,13 +5,13 @@ from django.test import TestCase
 from model_mommy import mommy
 
 from combinedchoices.models import (
-    BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, Choice, CompletedCCO, ReadyCCO)
+    BASE_MODEL, SECTION_MODEL,
+    Choice, ChoiceSection, CompletedCCO, ReadyCCO)
 from combinedchoices.forms import ReadyForm
 
 
 BaseCCObj = apps.get_model(*BASE_MODEL.split('.'))
 BaseChoice = apps.get_model(*SECTION_MODEL.split('.'))
-ChoiceSection = apps.get_model(*THROUGH_MODEL.split('.'))
 
 
 class Unicode_Tests(TestCase):

@@ -6,7 +6,7 @@ from django.forms.models import ModelChoiceField, ModelMultipleChoiceField
 from django.forms.widgets import CheckboxSelectMultiple, RadioSelect, Textarea
 
 from combinedchoices.models import (
-    THROUGH_MODEL, SECTION_MODEL, Choice, CompletedCCO)
+    SECTION_MODEL, Choice, ChoiceSection, CompletedCCO)
 
 
 class ChoiceLabelMixin(object):
@@ -74,8 +74,7 @@ class ReadyForm(Form):
         self.fields[name].label = name
 
     def get_sections(self, compendiums, **kwargs):
-        kwargs.update({THROUGH_MODEL.split('.')[1].lower() +
-                      '__base_ccobj__in':compendiums})
+        kwargs.update({'choicesection__base_ccobj__in':compendiums})
         model = apps.get_model(*SECTION_MODEL.split('.'))
         return model.objects.filter(**kwargs)
 

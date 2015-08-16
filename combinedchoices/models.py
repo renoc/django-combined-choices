@@ -80,14 +80,12 @@ class BaseChoice(models.Model):
 
 SECTION_MODEL = getattr(
     settings, 'SECTION_MODEL', 'combinedchoices.fake_models.BaseChoice')
-THROUGH_MODEL = getattr(
-    settings, 'THROUGH_MODEL', 'combinedchoices.fake_models.ChoiceSection')
 
 
 class BaseCCObj(models.Model):
     form_name = models.CharField(max_length=64, null=False, blank=False)
     choice_sections = models.ManyToManyField(
-        SECTION_MODEL, through=THROUGH_MODEL, blank=True)
+        SECTION_MODEL, through='ChoiceSection', blank=True)
 
     class Meta:
         abstract = True
@@ -107,15 +105,12 @@ class ChoiceSection(models.Model):
     base_ccobj = models.ForeignKey(BASE_MODEL, null=False, blank=False)
     base_choice = models.ForeignKey(SECTION_MODEL, null=False, blank=False)
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
         return '%s - %s' % (self.base_ccobj, self.base_choice)
 
 
 class Choice(models.Model):
-    choice_section = models.ForeignKey(THROUGH_MODEL, null=False, blank=False)
+    choice_section = models.ForeignKey(ChoiceSection, null=False, blank=False)
     text = models.TextField(null=False, blank=False)
 
     def __unicode__(self):

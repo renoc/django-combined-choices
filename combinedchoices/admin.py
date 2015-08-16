@@ -21,21 +21,15 @@ class BaseCCObjAdmin(admin.ModelAdmin):
 class ChoiceAdmin(admin.TabularInline):
     model = Choice
 
-    class Meta:
-        abstract = True
-
 
 class ChoiceSectionAdmin(admin.ModelAdmin):
     model = ChoiceSection
     inlines = [ChoiceAdmin,]
     list_display =['base_ccobj', 'base_choice']
 
-    class Meta:
-        abstract = True
-
 
 #admin.site.register(BaseChoice)
 #admin.site.register(BaseCCObj, BaseCCObjAdmin)
-#admin.site.register(ChoiceSection, ChoiceSectionAdmin)
+admin.site.register(ChoiceSection, ChoiceSectionAdmin)
 admin.site.register(CompletedCCO)
 admin.site.register(ReadyCCO)
