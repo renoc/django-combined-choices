@@ -118,9 +118,6 @@ class Choice(models.Model):
     choice_section = models.ForeignKey(THROUGH_MODEL, null=False, blank=False)
     text = models.TextField(null=False, blank=False)
 
-    class Meta:
-        abstract = True
-
     def __unicode__(self):
         return self.text[:20]
 

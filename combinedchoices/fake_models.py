@@ -2,8 +2,7 @@ from django.db import models
 
 from combinedchoices.models import (
     BaseChoice as AbstractBaseChoice, BaseCCObj as AbstractBaseCCObj,
-    Choice as AbstractChoice, ChoiceSection as AbstractChoiceSection,
-    ReadyCombinedObj as AbsReady)
+    ChoiceSection as AbstractChoiceSection, ReadyCombinedObj as AbsReady)
 
 
 class BaseChoice(AbstractBaseChoice):
@@ -15,10 +14,6 @@ class BaseCCObj(AbstractBaseCCObj):
 
 
 class ChoiceSection(AbstractChoiceSection):
-    pass
-
-
-class Choice(AbstractChoice):
     pass
 
 

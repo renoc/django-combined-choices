@@ -1,25 +1,19 @@
-django-combined-choices
-=======================
+#django-combined-choices
 
 
-Purpose
--------
-
-Create a single form with a radio or checkbox field that contains options from multiple objects. Conceptually the final result of this form is meant to be printed, and not meant to be modified.
+##Purpose
+Create a single form with a radio or checkbox field that contains options from multiple objects. Conceptually the final result of this form is ment to be printed, and not ment to be modified.
 
 
-Version
--------
-0.02
-Basic model schema.
+##Version
+0.10
+-Basic model schema.
+-Primary form.
 
 
-Requirements
-------------
+##Requirements
 jsonfield
 
 
-To-Do
------
+##To-Do
 Research proper implementation of requirements.
-Use simplified MD format

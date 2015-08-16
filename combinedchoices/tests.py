@@ -4,14 +4,13 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from model_mommy import mommy
 
-from combinedchoices.models import BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, CompletedCCO
+from combinedchoices.models import BASE_MODEL, SECTION_MODEL, THROUGH_MODEL, Choice, CompletedCCO
 from combinedchoices.fake_models import ReadyCombinedObj
-from combinedchoices.forms import ReadyForm, CHOICE_MODEL
+from combinedchoices.forms import ReadyForm
 
 
 BaseCCObj = apps.get_model(*BASE_MODEL.split('.'))
 BaseChoice = apps.get_model(*SECTION_MODEL.split('.'))
-Choice = apps.get_model(*CHOICE_MODEL.split('.'))
 ChoiceSection = apps.get_model(*THROUGH_MODEL.split('.'))
 
 
