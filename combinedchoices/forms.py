@@ -33,30 +33,26 @@ class ReadyForm(Form):
             if section.cross_combine:
                 name = section.field_name
                 queryset = Choice.objects.filter(
-                    choice_section__base_ccobj__in=baseccobjs)
+                    choice_section__basecco__in=baseccobjs)
                 self.create_section_field(name, section, queryset)
             else:
                 for basecc in baseccobjs:
                     name = '%s - %s' % (
                         basecc.form_name, section.field_name)
                     queryset = Choice.objects.filter(
-                        choice_section__base_ccobj=basecc)
+                        choice_section__basecco=basecc)
                     self.create_section_field(name, section, queryset)
 
     def create_section_field(self, name, basechoice, queryset):
         queryset = queryset.filter(
-            choice_section__base_choice=basechoice).order_by('text')
+            choice_section__section=basechoice).order_by('text')
         if basechoice.field_type in [Section.TEXT, Section.DESCRIPTION]:
             self.fields[name] = CharField(
                 help_text=basechoice.instructions, required=False,
                 initial='\n\n'.join(queryset.values_list('text', flat=True)))
             self.fields[name].widget = Textarea()
-            if basechoice.field_type is Section.DESCRIPTION:
-                self.fields[name].widget.attrs.update(
-                    {'class':'combo-text', 'disabled':True})
-            elif basechoice.field_type is Section.TEXT:
-                self.fields[name].widget.attrs.update(
-                    {'class':'combo-text', 'read-only':True})
+            self.fields[name].widget.attrs.update(
+                {'class':'combo-text', 'read-only':True})
         elif basechoice.field_type is Section.SINGLE:
             self.fields[name] = SingleChoice(
                 queryset=queryset, help_text=basechoice.instructions,
@@ -71,7 +67,7 @@ class ReadyForm(Form):
         self.fields[name].label = name
 
     def get_sections(self, compendiums, **kwargs):
-        kwargs.update({'choicesection__base_ccobj__in':compendiums})
+        kwargs.update({'choicesection__basecco__in':compendiums})
         return Section.objects.filter(**kwargs)
 
     def save(self, *args, **kwargs):

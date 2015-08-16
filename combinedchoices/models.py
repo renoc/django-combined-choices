@@ -78,7 +78,7 @@ class Section(ModelMixin):
 
 class BaseCCO(ModelMixin):
     form_name = models.CharField(max_length=64, null=False, blank=False)
-    choice_sections = models.ManyToManyField(
+    sections = models.ManyToManyField(
         Section, through='ChoiceSection', blank=True)
 
     def __unicode__(self):
@@ -92,16 +92,13 @@ class BaseCCO(ModelMixin):
         return Section.objects.filter(**self.self_kwargs()).exclude(
             basecco=self)
 
-    def base_choices(self):
-        return self.choice_sections.all()
-
 
 class ChoiceSection(models.Model):
-    base_ccobj = models.ForeignKey(BaseCCO, null=False, blank=False)
-    base_choice = models.ForeignKey(Section, null=False, blank=False)
+    basecco = models.ForeignKey(BaseCCO, null=False, blank=False)
+    section = models.ForeignKey(Section, null=False, blank=False)
 
     def __unicode__(self):
-        return '%s - %s' % (self.base_ccobj, self.base_choice)
+        return '%s - %s' % (self.basecco, self.section)
 
 
 class Choice(models.Model):

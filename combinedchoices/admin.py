@@ -4,18 +4,12 @@ from combinedchoices.models import (
 
 
 class ChoiceSectionThroughInline(admin.TabularInline):
-    model = BaseCCO.choice_sections.through
-
-    class Meta:
-        abstract = True
+    model = BaseCCO.sections.through
 
 
 class BaseCCObjAdmin(admin.ModelAdmin):
     model = BaseCCO
     inlines = (ChoiceSectionThroughInline,)
-
-    class Meta:
-        abstract = True
 
 
 class ChoiceAdmin(admin.TabularInline):
@@ -25,7 +19,7 @@ class ChoiceAdmin(admin.TabularInline):
 class ChoiceSectionAdmin(admin.ModelAdmin):
     model = ChoiceSection
     inlines = [ChoiceAdmin,]
-    list_display =['base_ccobj', 'base_choice']
+    list_display =['basecco', 'section']
 
 
 admin.site.register(BaseCCO, BaseCCObjAdmin)

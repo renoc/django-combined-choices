@@ -32,8 +32,8 @@ class Unicode_Tests(TestCase):
 
     def test_ChoiceSection(self):
         mod = mommy.make(
-            ChoiceSection, base_ccobj__form_name='testbcco',
-            base_choice__field_name='testbc')
+            ChoiceSection, basecco__form_name='testbcco',
+            section__field_name='testbc')
         self.assertEqual('testbcco - testbc', '%s' % mod)
 
     def test_Choice(self):
@@ -91,8 +91,8 @@ class BaseCCO_Tests(TestCase):
         modin = mommy.make(Section, field_name='in', user=user)
         modout = mommy.make(Section, field_name='out', user=user)
         modother = mommy.make(Section, field_name='other')
-        mommy.make(ChoiceSection, base_ccobj=tested, base_choice=modin)
-        mommy.make(ChoiceSection, base_ccobj=untested, base_choice=modout)
+        mommy.make(ChoiceSection, basecco=tested, section=modin)
+        mommy.make(ChoiceSection, basecco=untested, section=modout)
         self.assertEqual(tested.available_sections().get(), modout)
 
 
@@ -103,19 +103,17 @@ class Section_ModelTests(TestCase):
         self.assertEqual(mod.choice_type, 'Single')
 
     def test_linked_choices(self):
-        hack = mommy.make(ChoiceSection, base_ccobj__form_name='hack')
-        model = hack.base_ccobj.choice_sections.through
         mod = mommy.make(
-            model, base_ccobj__form_name='tested',
-            base_choice__field_name='modin')
-        tested = mod.base_ccobj
-        modin = mod.base_choice
+            ChoiceSection, basecco__form_name='tested',
+            section__field_name='modin')
+        tested = mod.basecco
+        modin = mod.section
         mod = mommy.make(
-            model, base_ccobj__form_name='untested',
-            base_choice__field_name='modout')
-        self.assertNotEqual(tested, mod.base_ccobj)
-        self.assertNotEqual(modin, mod.base_choice)
-        self.assertEqual(tested.base_choices().get(), modin)
+            ChoiceSection, basecco__form_name='untested',
+            section__field_name='modout')
+        self.assertNotEqual(tested, mod.basecco)
+        self.assertNotEqual(modin, mod.section)
+        self.assertEqual(tested.sections.get(), modin)
 
     def test_validate_pass(self):
         mod = mommy.make(Section, field_name='testuni')
@@ -143,10 +141,10 @@ class Section_Type_by_Form_Tests(TestCase):
             Section, field_name='section', cross_combine=True,
             field_type=Section.MULTIPLE)
         comp1 = mommy.make(BaseCCO, form_name='test_compendium')
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
         comp2 = mommy.make(BaseCCO, form_name='compendium_test')
-        cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp2, section=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         form = ReadyForm(ready_obj=combined)
@@ -158,10 +156,10 @@ class Section_Type_by_Form_Tests(TestCase):
             Section, field_name='section', cross_combine=False,
             field_type=Section.MULTIPLE)
         comp1 = mommy.make(BaseCCO, form_name='test_compendium')
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
         comp2 = mommy.make(BaseCCO, form_name='compendium_test')
-        cs = mommy.make(ChoiceSection, base_ccobj=comp2, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp2, section=sect)
         mommy.make(Choice, text='choice_test', choice_section=cs)
         combined = mommy.make(ReadyCCO, included_forms=[comp1])
         form = ReadyForm(ready_obj=combined)
@@ -176,7 +174,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         sect = mommy.make(
             Section, field_name='section', field_type=Section.TEXT)
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
 
         self.assertEqual(len(form.fields), 1)
@@ -191,7 +189,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         sect = mommy.make(
             Section, field_name='section', field_type=Section.TEXT)
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         mommy.make(Choice, text='test_choice', choice_section=cs)
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': u'preset'}
@@ -211,7 +209,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         sect = mommy.make(
             Section, field_name='section', field_type=Section.SINGLE)
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         choice = mommy.make(Choice, text='preset', choice_section=cs)
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': choice}
@@ -231,7 +229,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         sect = mommy.make(
             Section, field_name='section', field_type=Section.DESCRIPTION)
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         choice = mommy.make(Choice, text='preset', choice_section=cs)
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': ''}
@@ -251,7 +249,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         sect = mommy.make(
             Section, field_name='section', field_type=Section.MULTIPLE)
-        cs = mommy.make(ChoiceSection, base_ccobj=comp1, base_choice=sect)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
         choice = mommy.make(Choice, text='test_choice', choice_section=cs)
         form = ReadyForm(**kwargs)
         form.cleaned_data = {'form_name': 'testcc', 'section': [choice]}
