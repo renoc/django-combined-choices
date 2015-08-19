@@ -1,14 +1,16 @@
 from django.apps import apps
 from django.forms.fields import BooleanField, CharField
 from django.forms.forms import Form
-from django.forms.models import ModelChoiceField, ModelMultipleChoiceField
+from django.forms.models import (
+    ModelForm, ModelChoiceField, ModelMultipleChoiceField)
 from django.forms.widgets import CheckboxSelectMultiple, RadioSelect, Textarea
+from extra_views import InlineFormSet
 
-from combinedchoices.models import Choice, ChoiceSection, CompletedCCO, Section
+from combinedchoices.models import (
+    BaseCCO, Choice, ChoiceSection, CompletedCCO, ReadyCCO, Section)
 
 
 class ChoiceLabelMixin(object):
-
     def label_from_instance(self, obj):
         return obj.text
 
@@ -21,12 +23,47 @@ class SingleChoice (ChoiceLabelMixin, ModelChoiceField):
     pass
 
 
+class BaseCCOForm(ModelForm):
+    class Meta:
+        model = BaseCCO
+        fields = ('form_name',)
+
+
+class SectionForm(ModelForm):
+    class Meta:
+        model = Section
+        exclude = ['user']
+
+
+class ChoiceSectionForm(ModelForm):
+    class Meta:
+        model = Choice
+        exclude = []
+
+
+class ChoiceForm(InlineFormSet):
+    model = Choice
+
+
+class CombineForm(ModelForm):
+    class Meta:
+        model = ReadyCCO
+        exclude = ['user']
+
+    def __init__(self, *args, **kwargs):
+        cco_queryset = kwargs.pop('cco_queryset')
+        super(CombineForm, self).__init__(*args, **kwargs)
+        self.fields['included_forms'].widget = CheckboxSelectMultiple(
+            choices=self.fields['included_forms'].choices)
+        self.fields['included_forms'].queryset = cco_queryset
+
+
 class ReadyForm(Form):
     form_name = CharField(label='Completed Name')
 
     def __init__(self, *args, **kwargs):
         ready_obj = kwargs.pop('ready_obj')
-        filters = kwargs.pop('filters', {})
+        filters = self.filters = self.get_filters(ready_obj)
         super(ReadyForm, self).__init__(*args, **kwargs)
         baseccobjs = ready_obj.included_forms.filter(**filters)
         for section in self.get_sections(baseccobjs, **filters):
@@ -66,6 +103,9 @@ class ReadyForm(Form):
                 choices=self.fields[name].choices)
         self.fields[name].label = name
 
+    def get_filters(self, ready_obj):
+        return {'user':ready_obj.user}
+
     def get_sections(self, compendiums, **kwargs):
         kwargs.update({'choicesection__basecco__in':compendiums})
         return Section.objects.filter(**kwargs)
@@ -88,5 +128,6 @@ class ReadyForm(Form):
                     completed[field].append(choice.text)
             else:
                 raise NotImplementedError()
+        kwargs.update(self.filters)
         return CompletedCCO.objects.create(
             form_name=name, form_data=completed, **kwargs)

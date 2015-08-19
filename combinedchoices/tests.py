@@ -5,9 +5,9 @@ from django.http import Http404
 from django.test import TestCase
 from model_mommy import mommy
 
+from combinedchoices.forms import ReadyForm
 from combinedchoices.models import (
     BaseCCO, Choice, ChoiceSection, CompletedCCO, ReadyCCO, Section)
-from combinedchoices.forms import ReadyForm
 
 
 class Unicode_Tests(TestCase):
