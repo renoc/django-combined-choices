@@ -6,15 +6,17 @@ Create a single form with a radio or checkbox field that contains options from m
 
 
 ##Version
-###0.10
-*Basic model schema.
-*Primary form.
+####0.20
+* Basic model schema.
+* Primary form.
 
 
 ##Requirements
-*jsonfield
-*django-extra-views
+* jsonfield
+* django-extra-views
 
 
 ##To-Do
 Research proper implementation of requirements.
+Enforce value constraints
+Use formsets

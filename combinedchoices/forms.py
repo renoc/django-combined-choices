@@ -73,7 +73,7 @@ class ReadyForm(Form):
                     choice_section__basecco__in=baseccobjs)
                 self.create_section_field(name, section, queryset)
             else:
-                for basecc in baseccobjs:
+                for basecc in baseccobjs.filter(sections=section):
                     name = '%s - %s' % (
                         basecc.form_name, section.field_name)
                     queryset = Choice.objects.filter(
@@ -88,14 +88,24 @@ class ReadyForm(Form):
                 help_text=basechoice.instructions, required=False,
                 initial='\n\n'.join(queryset.values_list('text', flat=True)))
             self.fields[name].widget = Textarea()
-            self.fields[name].widget.attrs.update(
-                {'class':'combo-text', 'read-only':True})
+            self.fields[name].widget.attrs.update({'class':'combo-text'})
+            if basechoice.field_type is Section.DESCRIPTION:
+                self.fields[name].widget.attrs.update(
+                    {'class':'combo-readonly', 'read-only':True})
         elif basechoice.field_type is Section.SINGLE:
             self.fields[name] = SingleChoice(
                 queryset=queryset, help_text=basechoice.instructions,
                 empty_label='')
             self.fields[name].widget = RadioSelect(
                 choices=self.fields[name].choices)
+        elif basechoice.field_type is Section.NUMBER:
+            for label in queryset.values_list('text', flat=True):
+                field = '%s_%s' % (name, label)
+                self.fields[field] = CharField(
+                    help_text=basechoice.instructions,
+                    required=False, initial='%s' % basechoice.min_selects)
+                self.fields[field].label = label
+            return
         else:
             self.fields[name] = MultiChoice(
                 queryset=queryset, help_text=basechoice.instructions)

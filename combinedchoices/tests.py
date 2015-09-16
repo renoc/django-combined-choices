@@ -262,3 +262,24 @@ class Section_Type_by_Form_Tests(TestCase):
         self.assertEqual(
             CompletedCCO.objects.get().form_data['section'][0],
             choice.text)
+
+    def test_number_save(self):
+        comp1 = mommy.make(BaseCCO, form_name='test_compendium')
+        combined = mommy.make(ReadyCCO, included_forms=[comp1])
+        kwargs = {'ready_obj': combined}
+
+        sect = mommy.make(
+            Section, field_name='section', field_type=Section.NUMBER)
+        cs = mommy.make(ChoiceSection, basecco=comp1, section=sect)
+        mommy.make(Choice, text='test_choice', choice_section=cs)
+        form = ReadyForm(**kwargs)
+        form.cleaned_data = {
+            'form_name': 'testcc', 'section_test_choice': u'5'}
+
+        self.assertFalse(CompletedCCO.objects.all().exists())
+
+        form.save()
+
+        self.assertTrue(CompletedCCO.objects.all().exists())
+        self.assertEqual(
+            CompletedCCO.objects.get().form_data['section_test_choice'][0], '5')
