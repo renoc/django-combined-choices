@@ -6,7 +6,7 @@ Create a single form with a radio or checkbox field that contains options from m
 
 
 ##Version
-####0.20
+####0.30
 * Basic model schema.
 * Primary form.
 
@@ -19,4 +19,3 @@ Create a single form with a radio or checkbox field that contains options from m
 ##To-Do
 Research proper implementation of requirements.
 Enforce value constraints
-Use formsets

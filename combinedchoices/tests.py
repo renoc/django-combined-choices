@@ -5,7 +5,8 @@ from django.http import Http404
 from django.test import TestCase
 from model_mommy import mommy
 
-from combinedchoices.forms import ReadyForm
+from combinedchoices.forms import (
+    mNumberWidget, MultiNumberField, ReadyForm)
 from combinedchoices.models import (
     BaseCCO, Choice, ChoiceSection, CompletedCCO, ReadyCCO, Section)
 
@@ -128,10 +129,17 @@ class Section_ModelTests(TestCase):
         self.assertRaises(ValidationError, mod.validate_unique)
 
 
-class ReadyForm_Tests(TestCase):
+class Custom_Form_Widget_Tests(TestCase):
 
-    def test_text_save(self):
-        pass
+    def test_multi_number_field_compress(self):
+        widget = MultiNumberField()
+        self.assertEqual(widget.compress(['']), '[""]')
+
+    def test_render_number_widget(self):
+        widget = mNumberWidget(attrs={'label':'label'})
+        self.assertTrue(
+            '<label>label</label>' in
+            widget.render(name='name', value='value'))
 
 
 class Section_Type_by_Form_Tests(TestCase):
@@ -200,7 +208,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCCO.objects.get().form_data['section'][0], 'preset')
+            CompletedCCO.objects.get().form_data['section'], 'preset')
 
     def test_single_save(self):
         comp1 = mommy.make(BaseCCO, form_name='test_compendium')
@@ -220,7 +228,7 @@ class Section_Type_by_Form_Tests(TestCase):
 
         self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCCO.objects.get().form_data['section'][0], 'preset')
+            CompletedCCO.objects.get().form_data['section'], 'preset')
 
     def test_description_save(self):
         comp1 = mommy.make(BaseCCO, form_name='test_compendium')
@@ -274,7 +282,7 @@ class Section_Type_by_Form_Tests(TestCase):
         mommy.make(Choice, text='test_choice', choice_section=cs)
         form = ReadyForm(**kwargs)
         form.cleaned_data = {
-            'form_name': 'testcc', 'section_test_choice': u'5'}
+            'form_name': 'testcc', 'section': '["5"]'}
 
         self.assertFalse(CompletedCCO.objects.all().exists())
 
@@ -282,4 +290,5 @@ class Section_Type_by_Form_Tests(TestCase):
 
         self.assertTrue(CompletedCCO.objects.all().exists())
         self.assertEqual(
-            CompletedCCO.objects.get().form_data['section_test_choice'][0], '5')
+            CompletedCCO.objects.get().form_data['section'],
+            {u'test_choice': u'5'})

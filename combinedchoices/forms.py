@@ -1,10 +1,12 @@
 from django.apps import apps
-from django.forms.fields import BooleanField, CharField
+from django.forms.fields import BooleanField, CharField, MultiValueField
 from django.forms.forms import Form
 from django.forms.models import (
     ModelForm, ModelChoiceField, ModelMultipleChoiceField)
-from django.forms.widgets import CheckboxSelectMultiple, RadioSelect, Textarea
+from django.forms.widgets import (
+    CheckboxSelectMultiple, MultiWidget, NumberInput, RadioSelect, Textarea)
 from extra_views import InlineFormSet
+import json
 
 from combinedchoices.models import (
     BaseCCO, Choice, ChoiceSection, CompletedCCO, ReadyCCO, Section)
@@ -15,11 +17,40 @@ class ChoiceLabelMixin(object):
         return obj.text
 
 
-class MultiChoice (ChoiceLabelMixin, ModelMultipleChoiceField):
+class MultiChoice(ChoiceLabelMixin, ModelMultipleChoiceField):
     pass
 
 
-class SingleChoice (ChoiceLabelMixin, ModelChoiceField):
+class mNumberWidget(NumberInput):
+
+    def render(self, *args, **kwargs):
+        input_box = super(mNumberWidget, self).render(*args, **kwargs)
+        return '<p><label>%s</label>%s</p>' % (self.attrs['label'], input_box)
+
+
+class mNumberField(CharField):
+    widget = mNumberWidget
+
+    def widget_attrs(self, widget):
+        attrs = super(mNumberField, self).widget_attrs(widget)
+        attrs['label'] = self.label
+        return attrs
+
+
+class MultiNumberField(ChoiceLabelMixin, MultiValueField):
+
+    def __init__(self, fields=(), *args, **kwargs):
+        widgets = [field.widget for field in fields]
+        self.widget = MultiWidget(widgets=widgets)
+        initial = [field.initial for field in fields]
+        return super(MultiNumberField, self).__init__(
+            fields=fields, *args, initial=initial, **kwargs)
+
+    def compress(self, values):
+        return json.dumps(values)
+
+
+class SingleChoice(ChoiceLabelMixin, ModelChoiceField):
     pass
 
 
@@ -70,7 +101,7 @@ class ReadyForm(Form):
             if section.cross_combine:
                 name = section.field_name
                 queryset = Choice.objects.filter(
-                    choice_section__basecco__in=baseccobjs)
+                    choice_section__basecco__in=baseccobjs).order_by('text')
                 self.create_section_field(name, section, queryset)
             else:
                 for basecc in baseccobjs.filter(sections=section):
@@ -82,7 +113,7 @@ class ReadyForm(Form):
 
     def create_section_field(self, name, basechoice, queryset):
         queryset = queryset.filter(
-            choice_section__section=basechoice).order_by('text')
+            choice_section__section=basechoice)
         if basechoice.field_type in [Section.TEXT, Section.DESCRIPTION]:
             self.fields[name] = CharField(
                 help_text=basechoice.instructions, required=False,
@@ -99,12 +130,13 @@ class ReadyForm(Form):
             self.fields[name].widget = RadioSelect(
                 choices=self.fields[name].choices)
         elif basechoice.field_type is Section.NUMBER:
-            for label in queryset.values_list('text', flat=True):
-                field = '%s_%s' % (name, label)
-                self.fields[field] = CharField(
-                    help_text=basechoice.instructions,
-                    required=False, initial='%s' % basechoice.min_selects)
-                self.fields[field].label = label
+            self.fields[name] = MultiNumberField(
+                fields=[
+                    mNumberField(
+                        initial='%s' % basechoice.min_selects, label=label,
+                        required=True)
+                    for label in queryset.values_list('text', flat=True)],
+                help_text=basechoice.instructions)
             return
         else:
             self.fields[name] = MultiChoice(
@@ -129,13 +161,20 @@ class ReadyForm(Form):
             if not data:
                 pass
             elif type(self.fields[field]) is CharField:
-                completed[field] = [data]
+                completed[field] = data
             elif type(self.fields[field]) is SingleChoice:
-                completed[field] = [data.text]
+                completed[field] = data.text
             elif type(self.fields[field]) in [MultiChoice]:
                 completed[field] = []
                 for choice in self.cleaned_data[field]:
                     completed[field].append(choice.text)
+            elif type(self.fields[field]) is MultiNumberField:
+                data = json.loads(data)
+                completed[field] = {}
+                for subfield in range(len(data)):
+                    completed[field][
+                        self.fields[field].fields[subfield].label
+                        ] = data[subfield]
             else:
                 raise NotImplementedError()
         kwargs.update(self.filters)
